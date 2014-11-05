@@ -8,16 +8,19 @@ import (
 	"github.com/kurrik/oauth1a"
 	"github.com/codingneo/twittergo"
 	"github.com/kurrik/json"
-	//"io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
-	//"strings"
+	"strings"
 	"sync"
 	"time"
+	"container/list"
+
+	"github.com/codingneo/tweetsbot/ranking"
 )
 
-/*
+
 func LoadCredentials() (client *twittergo.Client, err error) {
 	credentials, err := ioutil.ReadFile("CREDENTIALS")
 	if err != nil {
@@ -29,22 +32,9 @@ func LoadCredentials() (client *twittergo.Client, err error) {
 		ConsumerSecret: lines[1],
 	}
 	user := oauth1a.NewAuthorizedConfig(lines[2], lines[3])
-	client = twittergo.NewClient(config, user)
-	return
-}
-*/
-func LoadCredentials() (client *twittergo.Client, err error) {
-	config := &oauth1a.ClientConfig{
-		ConsumerKey:    "IvRak6KY38k6LLCY4qGOgjfGC",
-		ConsumerSecret: "z454pOM3VqApBjAaZPtdW0hDNOayqy2AX28hD8OZGWDCQ2fVvW",
-	}
-	user := oauth1a.NewAuthorizedConfig(
-		"2679119462-FezANsujMRbfYJHfTIMKyBI4JiVei9NDwUesNkV", 
-		"wTpLvDg4r9u77CpL7nGce0djla9p27HgQ5wyp4dT5DQHk")
 	client = twittergo.NewClient(config, user, "stream.twitter.com")
 	return
 }
-
 
 type Args struct {
 	Track string
@@ -188,23 +178,43 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 	done := make(chan bool)
 	stream := make(chan []byte, 1000)
 	go func() {
+		topList := list.New()
+
 		for data := range stream {
 			fmt.Println(string(data))
 			tweet := &twittergo.Tweet{}
 			err := json.Unmarshal(data, tweet)
 			if (err == nil) {
-					fmt.Printf("ID:                   %v\n", tweet.Id())
-					fmt.Printf("User:                 %v\n", tweet.User().ScreenName())
-					fmt.Printf("Tweet:                %v\n", tweet.Text())
-					rs := tweet.RetweetStatus()
-					if (rs != nil) {
-						fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
-						fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
+				fmt.Printf("ID:                   %v\n", tweet.Id())
+				fmt.Printf("User:                 %v\n", tweet.User().ScreenName())
+				fmt.Printf("Tweet:                %v\n", tweet.Text())
+				
+				rs := tweet.RetweetStatus()
+				vote := 0
+				if (rs != nil) {
+					fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
+					fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
+					vote += int(rs.RetweetCount()+rs.FavoriteCount())
+				}
+				
+				e := tweet.Entities()
+				if (e != nil) {
+					fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
+
+					// Form top item
+					if (e.FirstUrl().ExpandedUrl()!="") {
+						item := ranking.Item{}
+						item.Vote = vote
+						item.Url = e.FirstUrl().ExpandedUrl()
+
+						ranking.Insert(topList, item)
+
+						fmt.Println("**********************************")
+						for e := topList.Front(); e != nil; e = e.Next() {
+							fmt.Printf("%d: %v\n",e.Value.(ranking.Item).Vote, e.Value.(ranking.Item).Url)
+						}						
 					}
-					e := tweet.Entities()
-					if (e != nil) {
-						fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
-					}
+				}
 			}
 		}		
 	}()
