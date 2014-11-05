@@ -1,0 +1,18 @@
+{
+	"ImportPath": "github.com/codingneo/tweetsbot",
+	"GoVersion": "go1.3.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/codingneo/twittergo",
+			"Rev": "1d80b6c4cab15b79276037f6f2e0fb70ac2fff1a"
+		},
+		{
+			"ImportPath": "github.com/kurrik/json",
+			"Rev": "f63ef626c5ffbfcd5dd5430c18c8b2eb14593c38"
+		},
+		{
+			"ImportPath": "github.com/kurrik/oauth1a",
+			"Rev": "fc2542bc5f2532ed4a437960d2d51ff6e18a5cb6"
+		}
+	]
+}
