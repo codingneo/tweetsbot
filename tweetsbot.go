@@ -8,7 +8,7 @@ import (
 	"github.com/kurrik/oauth1a"
 	"github.com/codingneo/twittergo"
 	"github.com/kurrik/json"
-	"io/ioutil"
+	//"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -227,6 +227,7 @@ func main() {
 	f, err := os.Create("/tmp/dat")
 	defer f.Close()
 	n, err := f.WriteString("writes\n")
+	fmt.Println("Write %d bytes", n)
 
 
 	args = parseArgs()
