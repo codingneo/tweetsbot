@@ -8,7 +8,7 @@ import (
 	"github.com/kurrik/oauth1a"
 	"github.com/codingneo/twittergo"
 	"github.com/kurrik/json"
-	//"io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -223,6 +223,12 @@ func main() {
 		args   *Args
 		client *twittergo.Client
 	)
+
+	f, err := os.Create("/tmp/dat")
+	defer f.Close()
+	n, err := f.WriteString("writes\n")
+
+
 	args = parseArgs()
 	if client, err = LoadCredentials(); err != nil {
 		fmt.Printf("Could not parse CREDENTIALS file: %v\n", err)
