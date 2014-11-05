@@ -78,8 +78,6 @@ func NewStreamConn(max int) streamConn {
 	return streamConn{wait: 1, maxWait: max}
 }
 
-//type StreamHandler func([]byte)
-
 func (conn *streamConn) Close() {
 	// Just mark the connection as stale, and let the connect() handler close after a read
 	conn.mu.Lock()
