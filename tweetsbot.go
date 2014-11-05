@@ -17,7 +17,6 @@ import (
 	"time"
 )
 
-
 /*
 func LoadCredentials() (client *twittergo.Client, err error) {
 	credentials, err := ioutil.ReadFile("CREDENTIALS")
@@ -223,12 +222,6 @@ func main() {
 		args   *Args
 		client *twittergo.Client
 	)
-
-	f, err := os.Create("/tmp/dat")
-	defer f.Close()
-	n, err := f.WriteString("writes\n")
-	fmt.Println("Write %d bytes", n)
-
 
 	args = parseArgs()
 	if client, err = LoadCredentials(); err != nil {
