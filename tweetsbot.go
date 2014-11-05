@@ -17,6 +17,7 @@ import (
 	"time"
 )
 
+
 /*
 func LoadCredentials() (client *twittergo.Client, err error) {
 	credentials, err := ioutil.ReadFile("CREDENTIALS")
