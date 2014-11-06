@@ -182,10 +182,10 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 		topList := list.New()
 
 		c := cron.New()
-		c.AddFunc("5 * * * * *", 
+		c.AddFunc("0 0 * * * *", 
 			func() { 
 				fmt.Println("cron cron cron cron ............................")
-				filename := "toplist-" + time.Now().Local().Format(2011010402)
+				filename := "toplist-" + time.Now().Local().Format("2011010402")
 				f, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND, 0666)
 				if (err != nil) {
 					fmt.Println("[Cron] File not exist")
