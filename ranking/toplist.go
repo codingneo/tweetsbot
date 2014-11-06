@@ -13,11 +13,15 @@ type Item struct {
 }
 
 func Insert(l *list.List, item Item) {
+	fmt.Printf("List len=%d\n", l.Len())
 	var elm *list.Element
 	for e := l.Front(); e != nil; e = e.Next() {
 		if item.Url==e.Value.(Item).Url {
+			if item.Vote<=e.Value.(Item).Vote {
+				item.Vote += e.Value.(Item).Vote
+			}
 			elm = e
-			break
+			break			
 		}
 	}
 	if (elm!=nil) {
@@ -26,7 +30,7 @@ func Insert(l *list.List, item Item) {
 
 	elm = nil
 	for e := l.Front(); e != nil; e = e.Next() {
-		if item.Vote>e.Value.(Item).Vote {
+		if item.Vote>=e.Value.(Item).Vote {
 			elm = e
 			break
 		}
@@ -39,11 +43,9 @@ func Insert(l *list.List, item Item) {
 			l.InsertBefore(item, elm)
 		}
 	} else {
-		l.Remove(l.Back())
-		if (elm == nil) {
-			l.PushBack(item)
-		} else {
+		if (elm != nil) {
 			l.InsertBefore(item, elm)
+			l.Remove(l.Back())
 		}
 	}
 }
