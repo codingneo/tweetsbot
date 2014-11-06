@@ -259,8 +259,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
     				fmt.Println("top image", article.TopImage)
 
     				if (article.Title != "") && 
-    					 (article.MetaDescription != "") && 
-    					 (article.TopImage != "") {
+    					 (article.MetaDescription != "")) {
 							item.Title = article.Title
     					item.Description = article.MetaDescription
     					item.Image = article.TopImage
