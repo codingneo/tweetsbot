@@ -5,9 +5,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"github.com/kurrik/oauth1a"
-	"github.com/codingneo/twittergo"
-	"github.com/kurrik/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -17,6 +14,10 @@ import (
 	"time"
 	"container/list"
 
+	"github.com/kurrik/oauth1a"
+	"github.com/codingneo/twittergo"
+	"github.com/kurrik/json"
+	"github.com/robfig/cron"
 	"github.com/codingneo/tweetsbot/ranking"
 )
 
@@ -180,6 +181,32 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 	go func() {
 		topList := list.New()
 
+		c := cron.New()
+		c.AddFunc("5 * * * * *", 
+			func() { 
+				fmt.Println("cron cron cron cron ............................")
+				filename := "toplist-" + time.Now().Local().Format(2011010402)
+				f, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND, 0666)
+				if (err != nil) {
+					fmt.Println("[Cron] File not exist")
+					f, err = os.Create("./toplist.txt")
+					if (err != nil) {
+						fmt.Println("[Cron] File creation error")
+					}
+				}
+
+				for e := topList.Front(); e != nil; e = e.Next() {
+					fmt.Println("[Cron] Write url into file")
+					f.WriteString(e.Value.(ranking.Item).Url)
+					f.WriteString("\n")
+				}
+
+				f.Sync()
+				f.Close()
+			})
+		c.Start()
+		fmt.Println("cron job start")
+
 		for data := range stream {
 			fmt.Println(string(data))
 			tweet := &twittergo.Tweet{}
@@ -216,7 +243,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 					}
 				}
 			}
-		}		
+		}
 	}()
 
 	readStream(client, sc, path, query, resp, func(line []byte) {
