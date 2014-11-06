@@ -13,11 +13,13 @@ import (
 	"sync"
 	"time"
 	"container/list"
+	js "encoding/json"
 
 	"github.com/kurrik/oauth1a"
 	"github.com/codingneo/twittergo"
 	"github.com/kurrik/json"
 	"github.com/robfig/cron"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/codingneo/tweetsbot/ranking"
 )
 
@@ -181,14 +183,19 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 	go func() {
 		topList := list.New()
 
+		//Cron job to store toplist per hour
 		c := cron.New()
-		c.AddFunc("0 0 * * * *", 
+		c.AddFunc("0 * * * * *", 
 			func() { 
 				fmt.Println("cron cron cron cron ............................")
-				filename := "toplist-" + 
-										time.Now().Local().Format("2011010402") +
-										".txt"
-				f, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND, 0666)
+				filename := "./data/toplist-" + 
+										time.Now().Local().Format("2006-01-02") +
+										".json"
+
+				output := make(map[string]interface{})
+				output["articles"] = make([]ranking.Item, 0)
+
+				f, err := os.OpenFile(filename, os.O_RDWR, 0666)
 				if (err != nil) {
 					fmt.Println("[Cron] File not exist")
 					f, err = os.Create(filename)
@@ -197,12 +204,17 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 					}
 				}
 
+				tlist := make([]ranking.Item, 0)
 				for e := topList.Front(); e != nil; e = e.Next() {
 					fmt.Println("[Cron] Write url into file")
-					f.WriteString(e.Value.(ranking.Item).Url)
-					f.WriteString("\n")
+					//f.WriteString(e.Value.(ranking.Item).Url)
+					//f.WriteString("\n")
+					tlist = append(tlist, e.Value.(ranking.Item))
 				}
+				output["articles"] = tlist
 
+				jsonstr, _ := js.Marshal(output)
+				f.WriteString(string(jsonstr))
 				f.Sync()
 				f.Close()
 			})
@@ -236,7 +248,12 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 						item.Vote = vote
 						item.Url = e.FirstUrl().ExpandedUrl()
 
-						ranking.Insert(topList, item)
+						doc, err := goquery.NewDocument(item.Url)
+						if err == nil {
+							item.Title = doc.Find("title").Text()
+							fmt.Printf("title:        %v\n", item.Title)
+							ranking.Insert(topList, item)
+						}
 
 						fmt.Println("**********************************")
 						for e := topList.Front(); e != nil; e = e.Next() {

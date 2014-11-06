@@ -10,6 +10,7 @@ const TOPLIST_LEN = 20
 type Item struct {
 	Vote int
 	Url string
+	Title string
 }
 
 func Insert(l *list.List, item Item) {
