@@ -11,6 +11,8 @@ type Item struct {
 	Vote int
 	Url string
 	Title string
+	Description string
+	Image string
 }
 
 func Insert(l *list.List, item Item) {
@@ -19,7 +21,7 @@ func Insert(l *list.List, item Item) {
 	for e := l.Front(); e != nil; e = e.Next() {
 		if item.Url==e.Value.(Item).Url {
 			if item.Vote<=e.Value.(Item).Vote {
-				item.Vote += e.Value.(Item).Vote
+				item.Vote = e.Value.(Item).Vote
 			}
 			elm = e
 			break			

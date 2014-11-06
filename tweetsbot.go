@@ -19,7 +19,8 @@ import (
 	"github.com/codingneo/twittergo"
 	"github.com/kurrik/json"
 	"github.com/robfig/cron"
-	"github.com/PuerkitoBio/goquery"
+	//"github.com/PuerkitoBio/goquery"
+	"github.com/advancedlogic/GoOse"
 	"github.com/codingneo/tweetsbot/ranking"
 )
 
@@ -221,6 +222,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 		c.Start()
 		fmt.Println("cron job start")
 
+		g := goose.New()
 		for data := range stream {
 			fmt.Println(string(data))
 			tweet := &twittergo.Tweet{}
@@ -248,12 +250,29 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 						item.Vote = vote
 						item.Url = e.FirstUrl().ExpandedUrl()
 
-						doc, err := goquery.NewDocument(item.Url)
-						if err == nil {
-							item.Title = doc.Find("title").Text()
-							fmt.Printf("title:        %v\n", item.Title)
-							ranking.Insert(topList, item)
-						}
+						// article extraction
+						//doc, err := goquery.NewDocument(item.Url)
+						article := g.ExtractFromUrl(item.Url)
+
+						fmt.Println("title", article.Title)
+    				fmt.Println("description", article.MetaDescription)
+    				fmt.Println("top image", article.TopImage)
+
+    				if (article.Title != "") && 
+    					 (article.MetaDescription != "") && 
+    					 (article.TopImage != "") {
+							item.Title = article.Title
+    					item.Description = article.MetaDescription
+    					item.Image = article.TopImage
+
+    					ranking.Insert(topList, item)
+    				}
+
+						//if err == nil {
+						//	item.Title = doc.Find("title").Text()
+						//	fmt.Printf("title:        %v\n", item.Title)
+						//	ranking.Insert(topList, item)
+						//}
 
 						fmt.Println("**********************************")
 						for e := topList.Front(); e != nil; e = e.Next() {

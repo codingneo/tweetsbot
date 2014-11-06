@@ -18,7 +18,11 @@ func main() {
 */
 
 func main() {
-	http.HandleFunc("/", hello)
+  fs := http.FileServer(http.Dir("../static"))
+  http.Handle("/", fs)
+
+
+	http.HandleFunc("/data/", hello)
 	fmt.Println("listening...")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
