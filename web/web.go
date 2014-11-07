@@ -38,5 +38,6 @@ func hello(res http.ResponseWriter, req *http.Request) {
 	data, _ := ioutil.ReadFile(filename)
 
 	res.Header().Set("Content-Type", "application/json")
+	res.Header().Set("Access-Control-Allow-Origin", "*")
 	fmt.Fprintln(res, string(data))
 }
