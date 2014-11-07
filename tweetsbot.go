@@ -197,12 +197,14 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				output["articles"] = make([]ranking.Item, 0)
 
 				f, err := os.OpenFile(filename, os.O_RDWR, 0666)
+				if (err == nil) {
+					f.Close()
+					err = os.Remove(filename)
+				}
+
+				f, err = os.Create(filename)
 				if (err != nil) {
-					fmt.Println("[Cron] File not exist")
-					f, err = os.Create(filename)
-					if (err != nil) {
-						fmt.Println("[Cron] File creation error")
-					}
+					fmt.Println("[Cron] File creation error")
 				}
 
 				tlist := make([]ranking.Item, 0)

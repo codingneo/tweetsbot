@@ -426,7 +426,7 @@
                 dataType: "json",
                 success: function(data){
                     $(".row").each(function(index) {
-                        if (index>0 && index<21) {
+                        if (index>0 && typeof data.articles[index-1] != "undefined") {
                             $(this).find(".col-md-1").html("<h1><span class=\"label label-success\">"+
                                 data.articles[index-1].Vote+"</span></h1>")
                             //$(this).find("img").attr("src", data.articles[index-1].Image)
