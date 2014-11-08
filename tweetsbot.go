@@ -203,8 +203,9 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 	done := make(chan bool)
 	stream := make(chan []byte, 1000)
 	go func() {
+		startday := time.Now().UTC().Day()
 		filename := "./data/toplist-" + 
-			time.Now().Local().Format("2006-01-02") +".json"
+			time.Now().UTC().Format("2006-01-02") +".json"
 
 		//
 		topList := LoadExistingList(filename)
@@ -248,6 +249,20 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 
 		g := goose.New()
 		for data := range stream {
+			if (time.Now().UTC().Day() != startday) {
+				// Clear the top list
+				var next *list.Element
+				for e := topList.Front(); e != nil; e = next {
+					next = e.Next()
+					topList.Remove(e)
+				}
+				
+				startday = time.Now().UTC().Day()
+				filename = "./data/toplist-" + 
+					time.Now().UTC().Format("2006-01-02") +".json"
+			}
+
+
 			fmt.Println(string(data))
 			tweet := &twittergo.Tweet{}
 			err := json.Unmarshal(data, tweet)
