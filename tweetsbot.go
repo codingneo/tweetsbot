@@ -47,11 +47,31 @@ type Args struct {
 
 func parseArgs() *Args {
 	a := &Args{}
-	flag.StringVar(&a.Track, "track", "Data Science,Big Data", "Keyword to look up")
+	flag.StringVar(&a.Track, "track", "Data Science,Big Data,Machine Learning", "Keyword to look up")
 	flag.StringVar(&a.Lang, "lang", "en", "Language to look up")
 	flag.Parse()
 	return a
 }
+
+func LoadExistingList(filename string) *list.List {
+	result := list.New()
+
+	data, err := ioutil.ReadFile(filename)
+	if (err == nil) {
+		// today's list exists, load existing list
+		input := make(map[string][]ranking.Item)
+		input["articles"] = make([]ranking.Item, 0)
+
+		js.Unmarshal(data, &input)
+		for item := range input["articles"] {
+			result.PushBack(item)
+		}
+	}
+
+	return result
+}
+
+
 
 type streamConn struct {
 	client   *http.Client
@@ -177,21 +197,23 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 
 	sc := NewStreamConn(300)
 
+	// Step 1: connect to twitter public stream endpoint
 	resp, err = Connect(client, path, query)
 
 	done := make(chan bool)
 	stream := make(chan []byte, 1000)
 	go func() {
-		topList := list.New()
+		filename := "./data/toplist-" + 
+			time.Now().Local().Format("2006-01-02") +".json"
 
+		//
+		topList := LoadExistingList(filename)
+		
 		//Cron job to store toplist per hour
 		c := cron.New()
 		c.AddFunc("0 * * * * *", 
 			func() { 
 				fmt.Println("cron cron cron cron ............................")
-				filename := "./data/toplist-" + 
-										time.Now().Local().Format("2006-01-02") +
-										".json"
 
 				output := make(map[string]interface{})
 				output["articles"] = make([]ranking.Item, 0)
@@ -234,59 +256,66 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				fmt.Printf("User:                 %v\n", tweet.User().ScreenName())
 				fmt.Printf("Tweet:                %v\n", tweet.Text())
 				
-				rs := tweet.RetweetStatus()
+				rs := tweet.RetweetedStatus()
 				vote := 0
+				createdAt := tweet.CreatedAt()
 				if (rs != nil) {
 					fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
 					fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
 					vote += int(rs.RetweetCount()+rs.FavoriteCount())
+
+					createdAt = rs.CreatedAt()
 				}
 				
-				e := tweet.Entities()
-				if (e != nil) {
-					fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
+				if (time.Now().UTC().Sub(createdAt).Hours() < 24.0) {
+					e := tweet.Entities()
+					if (e != nil) {
+						fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
 
-					// Form top item
-					if (e.FirstUrl().ExpandedUrl()!="") {
-						item := ranking.Item{}
-						item.Vote = vote
-						item.Url = e.FirstUrl().ExpandedUrl()
+						// Form top item
+						if (e.FirstUrl().ExpandedUrl()!="") {
+							item := ranking.Item{}
+							item.Vote = vote
+							item.Url = e.FirstUrl().ExpandedUrl()
 
-						// article extraction
-						//doc, err := goquery.NewDocument(item.Url)
-						article := g.ExtractFromUrl(item.Url)
+							// article extraction
+							//doc, err := goquery.NewDocument(item.Url)
+							article := g.ExtractFromUrl(item.Url)
 
-						fmt.Println("title", article.Title)
-    				fmt.Println("description", article.MetaDescription)
-    				fmt.Println("top image", article.TopImage)
+							fmt.Println("title", article.Title)
+	    				fmt.Println("description", article.MetaDescription)
+	    				fmt.Println("top image", article.TopImage)
 
-    				if (article.Title != "") && 
-    					 (article.MetaDescription != "") {
-							item.Title = article.Title
-    					item.Description = article.MetaDescription
-    					item.Image = article.TopImage
+	    				if (article.Title != "") && 
+	    					 (article.MetaDescription != "") {
+								item.Title = article.Title
+	    					item.Description = article.MetaDescription
+	    					item.Image = article.TopImage
 
-    					ranking.Insert(topList, item)
-    				}
+	    					ranking.Insert(topList, item)
+	    				}
 
-						//if err == nil {
-						//	item.Title = doc.Find("title").Text()
-						//	fmt.Printf("title:        %v\n", item.Title)
-						//	ranking.Insert(topList, item)
-						//}
+							//if err == nil {
+							//	item.Title = doc.Find("title").Text()
+							//	fmt.Printf("title:        %v\n", item.Title)
+							//	ranking.Insert(topList, item)
+							//}
 
-						fmt.Println("**********************************")
-						for e := topList.Front(); e != nil; e = e.Next() {
-							fmt.Printf("%d: %v\n",e.Value.(ranking.Item).Vote, e.Value.(ranking.Item).Url)
-						}						
-					}
+							fmt.Println("**********************************")
+							for e := topList.Front(); e != nil; e = e.Next() {
+								fmt.Printf("%d: %v\n",e.Value.(ranking.Item).Vote, e.Value.(ranking.Item).Url)
+							}						
+						}
+					}				
 				}
 			}
 		}
 	}()
 
-	readStream(client, sc, path, query, resp, func(line []byte) {
-		stream <- line}, done)
+	readStream(client, sc, path, query, resp, 
+		func(line []byte) {
+			stream <- line
+		}, done)
 
 
 	return
@@ -309,7 +338,7 @@ func main() {
 	query.Set("track", args.Track)
 	query.Set("lang", args.Lang)
 
-	fmt.Println("Printing everything about data science:")
+	fmt.Println("Printing everything about data science, big data and machine learning:")
 	fmt.Printf("=========================================================\n")
 	if err = filterStream(client, "/1.1/statuses/filter.json", query); err != nil {
 		fmt.Println("Error: %v\n", err)
