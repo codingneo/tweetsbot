@@ -53,18 +53,20 @@ func parseArgs() *Args {
 	return a
 }
 
+type TopList struct {
+	Articles []ranking.Item
+}
+
 func LoadExistingList(filename string) *list.List {
 	result := list.New()
 
 	data, err := ioutil.ReadFile(filename)
 	if (err == nil) {
 		// today's list exists, load existing list
-		input := make(map[string][]ranking.Item)
-		input["articles"] = make([]ranking.Item, 0)
-
+		var input TopList
 		js.Unmarshal(data, &input)
-		for item := range input["articles"] {
-			result.PushBack(item)
+		for i := 0; i<len(input.Articles); i++ {
+			result.PushBack(input.Articles[i])
 		}
 	}
 
