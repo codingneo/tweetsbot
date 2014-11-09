@@ -206,7 +206,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 	stream := make(chan []byte, 1000)
 	go func() {
 		startday := time.Now().UTC().Day()
-		filename := "./data/toplist-" + 
+		filename := "../data/toplist-" + 
 			time.Now().UTC().Format("2006-01-02") +".json"
 
 		//
@@ -228,8 +228,9 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				}
 
 				f, err = os.Create(filename)
+				fmt.Printf("[Cron] filename: %v\n", filename)
 				if (err != nil) {
-					fmt.Println("[Cron] File creation error")
+					fmt.Println("[Cron] File creation error", err)
 				}
 
 				tlist := make([]ranking.Item, 0)

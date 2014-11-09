@@ -1,0 +1,6 @@
+#!/bin/sh
+
+export GOPATH=/home/yiqhu/gocode
+export GOROOT=/home/yiqhu/go
+
+exec /home/yiqhu/go/bin/go run ../tweetsbot.go > ../log.txt
