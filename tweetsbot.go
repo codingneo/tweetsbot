@@ -294,30 +294,36 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 						if (e.FirstUrl().ExpandedUrl()!="") {
 							item := ranking.Item{}
 							item.Vote = vote
-							item.Url = e.FirstUrl().ExpandedUrl()
 
-							// article extraction
-							//doc, err := goquery.NewDocument(item.Url)
-							article := g.ExtractFromUrl(item.Url)
+							// fetch the final url
+							resp, err := http.Get(e.FirstUrl().ExpandedUrl())
+    					if err == nil {
+        				item.Url = resp.Request.URL.String()
+    					
+								// article extraction
+								article := g.ExtractFromUrl(item.Url)
 
-							fmt.Println("title", article.Title)
-	    				fmt.Println("description", article.MetaDescription)
-	    				fmt.Println("top image", article.TopImage)
+								fmt.Println("title", article.Title)
+		    				fmt.Println("description", article.MetaDescription)
+		    				fmt.Println("top image", article.TopImage)
 
-	    				if (article.Title != "") && 
-	    					 (article.MetaDescription != "") {
-								item.Title = article.Title
-	    					item.Description = article.MetaDescription
-	    					item.Image = article.TopImage
+		    				if (article.Title != "") && 
+		    					 (article.MetaDescription != "") {
+									item.Title = article.Title
+		    					item.Description = article.MetaDescription
+		    					item.Image = article.TopImage
 
-	    					ranking.Insert(topList, item)
-	    				}
+		    					ranking.Insert(topList, item)
+		    				}
 
-							//if err == nil {
-							//	item.Title = doc.Find("title").Text()
-							//	fmt.Printf("title:        %v\n", item.Title)
-							//	ranking.Insert(topList, item)
-							//}
+								//doc, err := goquery.NewDocument(item.Url)
+								//if err == nil {
+								//	item.Title = doc.Find("title").Text()
+								//	fmt.Printf("title:        %v\n", item.Title)
+								//	ranking.Insert(topList, item)
+								//}
+    					}
+    
 
 							fmt.Println("**********************************")
 							for e := topList.Front(); e != nil; e = e.Next() {
