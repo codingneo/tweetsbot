@@ -261,7 +261,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				}
 				
 				startday = time.Now().UTC().Day()
-				filename = "./data/toplist-" + 
+				filename = "../data/toplist-" + 
 					time.Now().UTC().Format("2006-01-02") +".json"
 			}
 

@@ -33,7 +33,7 @@ func main() {
 
 func hello(res http.ResponseWriter, req *http.Request) {
 	filename := "../data/toplist-" + 
-							time.Now().Local().Format("2006-01-02") +
+							time.Now().UTC().Format("2006-01-02") +
 							".json"
 	data, _ := ioutil.ReadFile(filename)
 
