@@ -1,13 +1,15 @@
 package ranking
 
 import (
-	"container/list"
 	"fmt"
+	"time"
+	"container/list"
 )
 
-const TOPLIST_LEN = 20
+//const TOPLIST_LEN = 20
 
 type Item struct {
+	CreatedAt	time.Time
 	Vote int
 	Url string
 	Title string
@@ -20,9 +22,10 @@ func Insert(l *list.List, item Item) {
 	var elm *list.Element
 	for e := l.Front(); e != nil; e = e.Next() {
 		if item.Url==e.Value.(Item).Url {
-			if item.Vote<=e.Value.(Item).Vote {
-				item.Vote = e.Value.(Item).Vote
-			}
+			//if item.Vote<=e.Value.(Item).Vote {
+			//	item.Vote = e.Value.(Item).Vote
+			//}
+			item.Vote = e.Value.(Item).Vote+1
 			elm = e
 			break			
 		}
@@ -33,12 +36,13 @@ func Insert(l *list.List, item Item) {
 
 	elm = nil
 	for e := l.Front(); e != nil; e = e.Next() {
-		if item.Vote>=e.Value.(Item).Vote {
+		if item.Vote>e.Value.(Item).Vote {
 			elm = e
 			break
 		}
 	}
 
+	/*
 	if (l.Len()<TOPLIST_LEN) {
 		if (elm == nil) {
 			l.PushBack(item)
@@ -50,6 +54,12 @@ func Insert(l *list.List, item Item) {
 			l.InsertBefore(item, elm)
 			l.Remove(l.Back())
 		}
+	}
+	*/
+	if (elm == nil) {
+		l.PushBack(item)
+	} else {
+		l.InsertBefore(item, elm)
 	}
 }
 
