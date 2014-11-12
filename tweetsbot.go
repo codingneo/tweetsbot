@@ -192,6 +192,72 @@ func Connect(client *twittergo.Client, path string, query url.Values) (resp *twi
 	return
 }
 
+func ParseTweet(tweet *twittergo.Tweet) ranking.Item {
+	item := ranking.Item{}
+
+	rs := tweet.RetweetedStatus()
+	vote := 1
+	createdAt := tweet.CreatedAt()
+	id := tweet.IdStr()
+	if (rs != nil) {
+		fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
+		fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
+		vote = int(rs.RetweetCount()+rs.FavoriteCount())
+
+		createdAt = rs.CreatedAt()
+		id = rs.IdStr()
+	}
+				
+	if (time.Now().UTC().Sub(createdAt).Hours() < 24.0) {
+		e := tweet.Entities()
+		if (e != nil) {
+			fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
+
+			// Form top item
+			if (e.FirstUrl().ExpandedUrl()!="") {				
+				item.CreatedAt = createdAt
+				item.Vote = vote
+				item.TweetIds = []string{id}
+
+				// fetch the final url
+				resp, err := http.Get(e.FirstUrl().ExpandedUrl())
+    		if err == nil {
+        	item.Url = resp.Request.URL.String()
+        	fmt.Println("final url:	", item.Url)
+        	fmt.Println("content-type: ", resp.Header.Get("Content-Type"))
+
+        	if (strings.Contains(resp.Header.Get("Content-Type"), "text/html")) {
+						// If it is a webpage
+						// article extraction
+						g := goose.New()
+						article := g.ExtractFromUrl(item.Url)
+
+						fmt.Println("title", article.Title)
+			    	fmt.Println("description", article.MetaDescription)
+			    	fmt.Println("top image", article.TopImage)
+
+			    	if (article.Title != "") {
+			    		//&& (article.MetaDescription != "") {
+							item.Title = article.Title
+			    		item.Description = article.MetaDescription
+			    		item.Image = article.TopImage
+			    	}
+			    } else {
+			    	//Other type
+			    	if (rs != nil) {
+			    		item.Title = rs.Text()
+			    	} else {
+							item.Title = tweet.Text()    		
+			    	}
+			    }
+			  }
+			}
+		}
+	}
+
+	return item
+}
+
 func filterStream(client *twittergo.Client, path string, query url.Values) (err error) {
 	var (
 		resp    *twittergo.APIResponse
@@ -234,11 +300,16 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				}
 
 				tlist := make([]ranking.Item, 0)
+				count := 0
 				for e := topList.Front(); e != nil; e = e.Next() {
 					fmt.Println("[Cron] Write url into file")
 					//f.WriteString(e.Value.(ranking.Item).Url)
 					//f.WriteString("\n")
 					tlist = append(tlist, e.Value.(ranking.Item))
+					count += 1
+					if (count >= 20) {
+						break
+					}
 				}
 				output["articles"] = tlist
 
@@ -250,14 +321,20 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 		c.Start()
 		fmt.Println("cron job start")
 
-		g := goose.New()
+		//g := goose.New()
 		for data := range stream {
 			if (time.Now().UTC().Day() != startday) {
 				// Clear the top list
 				var next *list.Element
+				count := 0
 				for e := topList.Front(); e != nil; e = next {
 					next = e.Next()
-					topList.Remove(e)
+					count += 1
+
+					dur := time.Now().UTC().Sub(e.Value.(ranking.Item).CreatedAt)
+					if (count<=20) || (dur.Hours()>=24.0) {
+						topList.Remove(e)						
+					}
 				}
 				
 				startday = time.Now().UTC().Day()
@@ -273,64 +350,15 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				fmt.Printf("ID:                   %v\n", tweet.Id())
 				fmt.Printf("User:                 %v\n", tweet.User().ScreenName())
 				fmt.Printf("Tweet:                %v\n", tweet.Text())
-				
-				rs := tweet.RetweetedStatus()
-				vote := 0
-				createdAt := tweet.CreatedAt()
-				if (rs != nil) {
-					fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
-					fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
-					vote += int(rs.RetweetCount()+rs.FavoriteCount())
 
-					createdAt = rs.CreatedAt()
-				}
-				
-				if (time.Now().UTC().Sub(createdAt).Hours() < 24.0) {
-					e := tweet.Entities()
-					if (e != nil) {
-						fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
+				item := ParseTweet(tweet)	
+				if (item.Title != "") {
+					ranking.Insert(topList, item)
 
-						// Form top item
-						if (e.FirstUrl().ExpandedUrl()!="") {
-							item := ranking.Item{}
-							item.Vote = vote
-
-							// fetch the final url
-							resp, err := http.Get(e.FirstUrl().ExpandedUrl())
-    					if err == nil {
-        				item.Url = resp.Request.URL.String()
-    					
-								// article extraction
-								article := g.ExtractFromUrl(item.Url)
-
-								fmt.Println("title", article.Title)
-		    				fmt.Println("description", article.MetaDescription)
-		    				fmt.Println("top image", article.TopImage)
-
-		    				if (article.Title != "") && 
-		    					 (article.MetaDescription != "") {
-									item.Title = article.Title
-		    					item.Description = article.MetaDescription
-		    					item.Image = article.TopImage
-
-		    					ranking.Insert(topList, item)
-		    				}
-
-								//doc, err := goquery.NewDocument(item.Url)
-								//if err == nil {
-								//	item.Title = doc.Find("title").Text()
-								//	fmt.Printf("title:        %v\n", item.Title)
-								//	ranking.Insert(topList, item)
-								//}
-    					}
-    
-
-							fmt.Println("**********************************")
-							for e := topList.Front(); e != nil; e = e.Next() {
-								fmt.Printf("%d: %v\n",e.Value.(ranking.Item).Vote, e.Value.(ranking.Item).Url)
-							}						
-						}
-					}				
+					fmt.Println("**********************************")
+					for e := topList.Front(); e != nil; e = e.Next() {
+						fmt.Printf("%d: %v\n",e.Value.(ranking.Item).Vote, e.Value.(ranking.Item).Url)
+					}
 				}
 			}
 		}
@@ -360,7 +388,7 @@ func main() {
 	fmt.Println(args.Track)
 	query := url.Values{}
 	query.Set("track", args.Track)
-	query.Set("lang", args.Lang)
+	query.Set("language", args.Lang)
 
 	fmt.Println("Printing everything about data science, big data and machine learning:")
 	fmt.Printf("=========================================================\n")
