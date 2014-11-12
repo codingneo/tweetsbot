@@ -15,6 +15,47 @@ type Item struct {
 	Title string
 	Description string
 	Image string
+	TweetIds []string
+}
+
+func (item Item) Contains(i Item) bool {
+	result := true
+	for _, id1 := range i.TweetIds {
+		matched := false
+		for _, id2 := range item.TweetIds {
+			if (id1 == id2) {
+				matched = true
+				break;
+			}
+		}
+		if (!matched) {
+			result = false
+			break;
+		}
+	}
+
+	return result
+}
+
+func CombineIds(i1 Item, i2 Item) []string {
+	result := make([]string, len(i1.TweetIds))
+	result = i1.TweetIds
+
+	for _, id := range i2.TweetIds {
+		matched := false
+		for _, id2 := range i1.TweetIds {
+			if (id == id2) {
+				matched = true
+				break
+			}
+		}
+
+		if (!matched) {
+			result = append(result, id)
+		}
+	}
+
+	return result
 }
 
 func Insert(l *list.List, item Item) {
@@ -25,7 +66,18 @@ func Insert(l *list.List, item Item) {
 			//if item.Vote<=e.Value.(Item).Vote {
 			//	item.Vote = e.Value.(Item).Vote
 			//}
-			item.Vote = e.Value.(Item).Vote+1
+
+			if (e.Value.(Item).Contains(item)) {
+				item.Vote = e.Value.(Item).Vote+1	
+			} else {
+				item.Vote += e.Value.(Item).Vote
+				item.TweetIds = CombineIds(e.Value.(Item), item)
+			}
+
+			
+			if (item.CreatedAt.After(e.Value.(Item).CreatedAt)) {
+				item.CreatedAt = e.Value.(Item).CreatedAt				
+			}
 			elm = e
 			break			
 		}

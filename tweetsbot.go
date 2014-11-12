@@ -288,12 +288,14 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				rs := tweet.RetweetedStatus()
 				vote := 1
 				createdAt := tweet.CreatedAt()
+				id := tweet.IdStr()
 				if (rs != nil) {
 					fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
 					fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
-					//vote += int(rs.RetweetCount()+rs.FavoriteCount())
+					vote = int(rs.RetweetCount()+rs.FavoriteCount())
 
 					createdAt = rs.CreatedAt()
+					id = rs.IdStr()
 				}
 				
 				if (time.Now().UTC().Sub(createdAt).Hours() < 24.0) {
@@ -306,13 +308,16 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 							item := ranking.Item{}
 							item.CreatedAt = createdAt
 							item.Vote = vote
+							item.TweetIds = []string{id}
 
 							// fetch the final url
 							resp, err := http.Get(e.FirstUrl().ExpandedUrl())
     					if err == nil {
         				item.Url = resp.Request.URL.String()
+        				fmt.Println("final url:	%v\n", item.Url)
+        				fmt.Println("content-type:	%v\n", resp.Header.Get("Content-Type"))
 
-        				if (resp.Header.Get("Content-Type") == "application/html") {
+        				if (strings.Contains(resp.Header.Get("Content-Type"), "text/html")) {
 									// article extraction
 									article := g.ExtractFromUrl(item.Url)
 
@@ -320,8 +325,8 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 			    				fmt.Println("description", article.MetaDescription)
 			    				fmt.Println("top image", article.TopImage)
 
-			    				if (article.Title != "") && 
-			    					 (article.MetaDescription != "") {
+			    				if (article.Title != "") {
+			    					 //&& (article.MetaDescription != "") {
 										item.Title = article.Title
 			    					item.Description = article.MetaDescription
 			    					item.Image = article.TopImage
@@ -373,7 +378,7 @@ func main() {
 	fmt.Println(args.Track)
 	query := url.Values{}
 	query.Set("track", args.Track)
-	query.Set("lang", args.Lang)
+	query.Set("language", args.Lang)
 
 	fmt.Println("Printing everything about data science, big data and machine learning:")
 	fmt.Printf("=========================================================\n")
