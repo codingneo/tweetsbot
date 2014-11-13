@@ -289,33 +289,33 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 
 				f, err := os.OpenFile(filename, os.O_RDWR, 0666)
 				if (err == nil) {
-					f.Close()
 					err = os.Remove(filename)
 				}
+				f.Close()
 
 				f, err = os.Create(filename)
 				fmt.Printf("[Cron] filename: %v\n", filename)
-				if (err != nil) {
-					fmt.Println("[Cron] File creation error", err)
-				}
-
-				tlist := make([]ranking.Item, 0)
-				count := 0
-				for e := topList.Front(); e != nil; e = e.Next() {
-					fmt.Println("[Cron] Write url into file")
-					//f.WriteString(e.Value.(ranking.Item).Url)
-					//f.WriteString("\n")
-					tlist = append(tlist, e.Value.(ranking.Item))
-					count += 1
-					if (count >= 20) {
-						break
+				if (err == nil) {
+					tlist := make([]ranking.Item, 0)
+					count := 0
+					for e := topList.Front(); e != nil; e = e.Next() {
+						fmt.Println("[Cron] Write url into file")
+						//f.WriteString(e.Value.(ranking.Item).Url)
+						//f.WriteString("\n")
+						tlist = append(tlist, e.Value.(ranking.Item))
+						count += 1
+						if (count >= 20) {
+							break
+						}
 					}
-				}
-				output["articles"] = tlist
+					output["articles"] = tlist
 
-				jsonstr, _ := js.Marshal(output)
-				f.WriteString(string(jsonstr))
-				f.Sync()
+					jsonstr, _ := js.Marshal(output)
+					f.WriteString(string(jsonstr))
+					f.Sync()
+				} else {
+					fmt.Println("[Cron] File creation error", err)	
+				}
 				f.Close()
 			})
 		c.Start()
