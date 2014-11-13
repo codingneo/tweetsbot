@@ -238,7 +238,7 @@ func ParseTweet(tweet *twittergo.Tweet) ranking.Item {
 
 			    	if (article.Title != "") {
 			    		//&& (article.MetaDescription != "") {
-							item.Title = article.Title
+							item.Title = strings.Trim(article.Title, " \n")
 			    		item.Description = article.MetaDescription
 			    		item.Image = article.TopImage
 			    	}
