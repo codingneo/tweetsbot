@@ -289,30 +289,24 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 
 				os.Remove(filename)
 
-				f, err := os.Create(filename)
 				fmt.Printf("[Cron] filename: %v\n", filename)
-				if (err == nil) {
-					tlist := make([]ranking.Item, 0)
-					count := 0
-					for e := topList.Front(); e != nil; e = e.Next() {
-						fmt.Println("[Cron] Write url into file")
-						//f.WriteString(e.Value.(ranking.Item).Url)
-						//f.WriteString("\n")
-						tlist = append(tlist, e.Value.(ranking.Item))
-						count += 1
-						if (count >= 20) {
-							break
-						}
+				
+				tlist := make([]ranking.Item, 0)
+				count := 0
+				for e := topList.Front(); e != nil; e = e.Next() {
+					fmt.Println("[Cron] Write url into file")
+					//f.WriteString(e.Value.(ranking.Item).Url)
+					//f.WriteString("\n")
+					tlist = append(tlist, e.Value.(ranking.Item))
+					count += 1
+					if (count >= 20) {
+						break
 					}
-					output["articles"] = tlist
-
-					jsonstr, _ := js.Marshal(output)
-					f.WriteString(string(jsonstr))
-					f.Sync()
-				} else {
-					fmt.Println("[Cron] File creation error", err)	
 				}
-				f.Close()
+				output["articles"] = tlist
+
+				jsonstr, _ := js.Marshal(output)
+				ioutil.WriteFile(filename, jsonstr, os.ModePerm)
 			})
 		c.Start()
 		fmt.Println("cron job start")
