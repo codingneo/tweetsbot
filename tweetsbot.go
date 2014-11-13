@@ -238,7 +238,7 @@ func ParseTweet(tweet *twittergo.Tweet) ranking.Item {
 
 			    	if (article.Title != "") {
 			    		//&& (article.MetaDescription != "") {
-							item.Title = article.Title
+							item.Title = strings.Trim(article.Title, " \n")
 			    		item.Description = article.MetaDescription
 			    		item.Image = article.TopImage
 			    	}
@@ -288,12 +288,13 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				output["articles"] = make([]ranking.Item, 0)
 
 				f, err := os.OpenFile(filename, os.O_RDWR, 0666)
+				defer f.Close()
 				if (err == nil) {
 					err = os.Remove(filename)
-				}
-				f.Close()
+				}				
 
 				f, err = os.Create(filename)
+				defer f.Close()
 				fmt.Printf("[Cron] filename: %v\n", filename)
 				if (err == nil) {
 					tlist := make([]ranking.Item, 0)
@@ -316,7 +317,6 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				} else {
 					fmt.Println("[Cron] File creation error", err)	
 				}
-				f.Close()
 			})
 		c.Start()
 		fmt.Println("cron job start")

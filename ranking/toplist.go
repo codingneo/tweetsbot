@@ -62,7 +62,8 @@ func Insert(l *list.List, item Item) {
 	fmt.Printf("List len=%d\n", l.Len())
 	var elm *list.Element
 	for e := l.Front(); e != nil; e = e.Next() {
-		if (item.Title==e.Value.(Item).Title) || 
+		if (strings.Contains(item.Title, e.Value.(Item).Title)) ||
+			 (strings.Contains(e.Value.(Item).Title, item.Title)) || 
 			 (item.Url==e.Value.(Item).Url) {
 			//if item.Vote<=e.Value.(Item).Vote {
 			//	item.Vote = e.Value.(Item).Vote
