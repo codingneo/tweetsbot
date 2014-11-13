@@ -287,14 +287,9 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				output := make(map[string]interface{})
 				output["articles"] = make([]ranking.Item, 0)
 
-				f, err := os.OpenFile(filename, os.O_RDWR, 0666)
-				defer f.Close()
-				if (err == nil) {
-					err = os.Remove(filename)
-				}				
+				os.Remove(filename)
 
-				f, err = os.Create(filename)
-				defer f.Close()
+				f, err := os.Create(filename)
 				fmt.Printf("[Cron] filename: %v\n", filename)
 				if (err == nil) {
 					tlist := make([]ranking.Item, 0)
@@ -317,6 +312,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				} else {
 					fmt.Println("[Cron] File creation error", err)	
 				}
+				f.Close()
 			})
 		c.Start()
 		fmt.Println("cron job start")
