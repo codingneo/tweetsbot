@@ -287,7 +287,10 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				output := make(map[string]interface{})
 				output["articles"] = make([]ranking.Item, 0)
 
-				os.Remove(filename)
+				err1 := os.Remove(filename)
+				if (err1 != nil) {
+					fmt.Println("[Cron] remove file error: ", filename)
+				}
 
 				fmt.Printf("[Cron] filename: %v\n", filename)
 				
@@ -306,7 +309,10 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				output["articles"] = tlist
 
 				jsonstr, _ := js.Marshal(output)
-				ioutil.WriteFile(filename, jsonstr, os.ModePerm)
+				err2 := ioutil.WriteFile(filename, jsonstr, os.ModePerm)
+				if (err2 != nil) {
+					fmt.Println("[Cron] write file error: ", filename)
+				}
 			})
 		c.Start()
 		fmt.Println("cron job start")
