@@ -250,6 +250,7 @@ func ParseTweet(tweet *twittergo.Tweet) ranking.Item {
 							item.Title = tweet.Text()    		
 			    	}
 			    }
+			    defer resp.Body.Close()
 			  }
 			}
 		}
