@@ -192,8 +192,16 @@ func Connect(client *twittergo.Client, path string, query url.Values) (resp *twi
 	return
 }
 
-func ParseTweet(tweet *twittergo.Tweet) ranking.Item {
+func ParseTweet(tweet *twittergo.Tweet, keywords []string) ranking.Item {
 	item := ranking.Item{}
+
+	matched := false
+	for _, keyword := range keywords {
+		if (strings.Contains(tweet.Text(), keyword)) {
+			matched = true
+			break
+		}
+	}	
 
 	rs := tweet.RetweetedStatus()
 	vote := 1
@@ -206,9 +214,16 @@ func ParseTweet(tweet *twittergo.Tweet) ranking.Item {
 
 		createdAt = rs.CreatedAt()
 		id = rs.IdStr()
+
+		for _, keyword := range keywords {
+			if (strings.Contains(rs.Text(), keyword)) {
+				matched = true
+				break
+			}
+		}	
 	}
 				
-	if (time.Now().UTC().Sub(createdAt).Hours() < 24.0) {
+	if (time.Now().UTC().Sub(createdAt).Hours() < 24.0) && (matched) {
 		e := tweet.Entities()
 		if (e != nil) {
 			fmt.Printf("url:        %v\n", e.FirstUrl().ExpandedUrl())
@@ -348,7 +363,7 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				fmt.Printf("User:                 %v\n", tweet.User().ScreenName())
 				fmt.Printf("Tweet:                %v\n", tweet.Text())
 
-				item := ParseTweet(tweet)	
+				item := ParseTweet(tweet, strings.Split(query.Get("track"),","))	
 				if (item.Title != "") {
 					ranking.Insert(topList, item)
 
