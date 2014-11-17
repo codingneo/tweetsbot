@@ -210,7 +210,7 @@ func ParseTweet(tweet *twittergo.Tweet, keywords []string) ranking.Item {
 	if (rs != nil) {
 		fmt.Printf("retweet_count:        %d\n", rs.RetweetCount())
 		fmt.Printf("favorite_count:        %d\n", rs.FavoriteCount())
-		vote = int(rs.RetweetCount()+rs.FavoriteCount())
+		vote = int(rs.RetweetCount()//+rs.FavoriteCount())
 
 		createdAt = rs.CreatedAt()
 		id = rs.IdStr()
