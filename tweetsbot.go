@@ -47,7 +47,7 @@ type Args struct {
 
 func parseArgs() *Args {
 	a := &Args{}
-	flag.StringVar(&a.Track, "track", "Data Science,Big Data,Machine Learning", "Keyword to look up")
+	flag.StringVar(&a.Track, "track", "Data Science,Big Data,Machine Learning,Apache Spark", "Keyword to look up")
 	flag.StringVar(&a.Lang, "lang", "en", "Language to look up")
 	flag.Parse()
 	return a
@@ -237,7 +237,7 @@ func ParseTweet(tweet *twittergo.Tweet, keywords []string) ranking.Item {
 				// fetch the final url
 				resp, err := http.Get(e.FirstUrl().ExpandedUrl())
     		if err == nil {
-        	item.Url = resp.Request.URL.String()
+        	item.Url = resp.Request.URL.Scheme+"://"+resp.Request.URL.Host + resp.Request.URL.Path
         	fmt.Println("final url:	", item.Url)
         	fmt.Println("content-type: ", resp.Header.Get("Content-Type"))
 
