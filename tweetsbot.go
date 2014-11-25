@@ -21,6 +21,8 @@ import (
 	"github.com/robfig/cron"
 	//"github.com/PuerkitoBio/goquery"
 	"github.com/advancedlogic/GoOse"
+
+	"github.com/codingneo/tweetsbot/rss"
 	"github.com/codingneo/tweetsbot/ranking"
 )
 
@@ -329,6 +331,11 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				err2 := ioutil.WriteFile(filename, jsonstr, os.ModePerm)
 				if (err2 != nil) {
 					fmt.Println("[Cron] write file error: ", filename)
+				}
+
+				// Update RSS Feed
+				if (time.Now().UTC().Day() != startday) {
+					rss.UpdateRSSFeed(tlist)
 				}
 			})
 		c.Start()
