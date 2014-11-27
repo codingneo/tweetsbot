@@ -49,7 +49,7 @@ type Args struct {
 
 func parseArgs() *Args {
 	a := &Args{}
-	flag.StringVar(&a.Track, "track", "Data Science,Big Data,Machine Learning,Data Mining,Apache Spark", "Keyword to look up")
+	flag.StringVar(&a.Track, "track", "Data Science,Big Data,Machine Learning,Data Mining,Deep Learning,Apache Spark", "Keyword to look up")
 	flag.StringVar(&a.Lang, "lang", "en", "Language to look up")
 	flag.Parse()
 	return a
