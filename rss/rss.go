@@ -23,15 +23,15 @@ func UpdateRSSFeed(toplist []ranking.Item) {
 
 	feed.Items = make([]*feeds.Item, len(toplist))
 
-	for _, item := range toplist {
-		feed.Items = append(feed.Items, 
+	for idx, item := range toplist {
+		fmt.Println(item)
+		feed.Items[idx] =  
 			&feeds.Item{
 				Title: item.Title,
 				Link:	&feeds.Link{Href: item.Url},
 				Description: item.Description,
 				Created: now,
-			},
-		)
+			}
 	}
 
 	rss, err := feed.ToRss()

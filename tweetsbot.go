@@ -332,11 +332,26 @@ func filterStream(client *twittergo.Client, path string, query url.Values) (err 
 				if (err2 != nil) {
 					fmt.Println("[Cron] write file error: ", filename)
 				}
+			})
 
-				// Update RSS Feed
-				if (time.Now().UTC().Day() != startday) {
-					rss.UpdateRSSFeed(tlist)
+		// cron job for updating RSS feed
+		c.AddFunc("0 * * * * *", 
+			func() {
+				tlist := make([]ranking.Item, 0)
+				count := 0
+				for e := topList.Front(); e != nil; e = e.Next() {
+					fmt.Println("[Cron] Write url into file")
+					//f.WriteString(e.Value.(ranking.Item).Url)
+					//f.WriteString("\n")
+					tlist = append(tlist, e.Value.(ranking.Item))
+					count += 1
+					if (count >= 20) {
+						break
+					}
 				}
+
+				fmt.Println(tlist)
+				rss.UpdateRSSFeed(tlist)
 			})
 		c.Start()
 		fmt.Println("cron job start")
